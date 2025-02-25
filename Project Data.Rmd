@@ -1,0 +1,21 @@
+---
+title: "Project Data"
+output: html_document
+date: "2025-02-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+most_streamed<-read_csv("~/Desktop/Spotify Most Streamed Songs.csv")
+most_streamed %>% 
+  names()
+```
+
+```{r}
+most_streamed %>% 
+  
+```
+
