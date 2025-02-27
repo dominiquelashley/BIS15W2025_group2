@@ -23,8 +23,17 @@ knitr::opts_chunk$set(echo = TRUE)
 most_streamed<-read_csv("~/Desktop/BIS15W2025_group2/Spotify Most Streamed Songs.csv")
 most_streamed %>% 
   clean_names()
+ 
+```
+```{r}
+most_streamed %>% 
   names()
 ```
+
+```{r}
+glimpse(most_streamed)
+```
+
 
 ```{r}
 most_streamed %>% 
