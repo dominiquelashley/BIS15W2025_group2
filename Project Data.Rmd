@@ -4,18 +4,195 @@ output: html_document
 date: "2025-02-25"
 ---
 
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(janitor)
+library(naniar)
+``` 
+
+```{r}
+options(scipen = 999)
+```
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-most_streamed<-read_csv("~/Desktop/Spotify Most Streamed Songs.csv")
+most_streamed<-read_csv("~/Desktop/BIS15W2025_group2/Spotify Most Streamed Songs.csv")
 most_streamed %>% 
+  clean_names()
   names()
 ```
 
 ```{r}
 most_streamed %>% 
+  ggplot(aes(x=reorder(key, in_spotify_charts), y=in_spotify_charts))+
+  geom_col()+
+  coord_flip()
   
 ```
+
+```{r}
+most_streamed %>% 
+  ggplot(aes(x=`danceability_%`))+
+  geom_density(fill="violetred", alpha=0.5)
+```
+```{r}
+most_streamed %>% 
+  ggplot(aes(x=in_spotify_playlists))+
+  geom_density(fill="violetred", alpha=0.5)
+```
+```{r}
+most_streamed %>% 
+  group_by(`artist(s)_name`) %>% 
+  summarize(total_playlists=sum(in_spotify_playlists, in_apple_playlists, in_deezer_playlists)) %>% 
+  arrange(-`total_playlists`)
+```
+
+```{r}
+top_five_artists_playlists<-
+  most_streamed %>% 
+  filter(`artist(s)_name` == "The Weeknd" | 
+           `artist(s)_name` =="Ed Sheeran"|
+           `artist(s)_name` == "Taylor Swift" | 
+           `artist(s)_name` =="Harry Styles" | 
+           `artist(s)_name` == "Eminem")
+```
+
+```{r}
+top_five_artists_playlists %>% 
+  count(`artist(s)_name`)
+```
+
+
+
+```{r}
+most_streamed %>% 
+  group_by(`artist(s)_name`) %>% 
+  summarize(total_charts=sum(in_spotify_charts, in_apple_charts, in_deezer_charts, in_shazam_charts)) %>% 
+  arrange(-`total_charts`)
+```
+
+
+```{r}
+top_five_artists_charts<-
+  most_streamed %>% 
+  filter(`artist(s)_name` == "Taylor Swift" | 
+           `artist(s)_name` =="Bad Bunny"|
+           `artist(s)_name` == "Jain" | 
+           `artist(s)_name` =="SZA" | 
+           `artist(s)_name` == "Miley Cyrus")
+```
+
+
+How does Danceability % relate to how many times the track with in Spotify, Apple, Shazam, and Deezer charts?
+```{r}
+most_streamed %>% 
+  group_by(`danceability_%`) %>% 
+  summarize(total_charts=sum(in_spotify_charts, in_apple_charts, in_deezer_charts, in_shazam_charts)) %>% 
+  ggplot(aes(x=`danceability_%`, y=total_charts))+
+  geom_jitter()
+```
+ 
+How does this differ for charts vs playlists?
+```{r}
+most_streamed %>% 
+  group_by(`danceability_%`) %>% 
+  summarize(total_charts=sum(in_spotify_charts, in_apple_charts, in_deezer_charts, in_shazam_charts, na.rm=T), 
+  total_playlists=sum(in_spotify_playlists, in_apple_playlists, in_deezer_playlists, na.rm=T)) %>% 
+  ggplot(aes(x=`danceability_%`, y=total_charts))+
+  geom_jitter()
+
+
+most_streamed %>% 
+  group_by(`danceability_%`) %>% 
+  summarize(total_charts=sum(in_spotify_charts, in_apple_charts, in_deezer_charts, in_shazam_charts, na.rm=T), 
+  total_playlists=sum(in_spotify_playlists, in_apple_playlists, in_deezer_playlists, na.rm=T)) %>% 
+  ggplot(aes(x=`danceability_%`, y=total_playlists))+
+  geom_jitter()
+
+
+```
+
+```{r}
+most_streamed %>% 
+  group_by(`key`) %>% 
+  summarize(total_charts=sum(in_spotify_charts, in_apple_charts, in_deezer_charts, in_shazam_charts, na.rm=T), 
+  total_playlists=sum(in_spotify_playlists, in_apple_playlists, in_deezer_playlists, na.rm=T)) %>% 
+  ggplot(aes(x=`key`, y=total_charts))+
+  geom_col()
+
+
+most_streamed %>% 
+  group_by(`key`) %>% 
+  summarize(total_charts=sum(in_spotify_charts, in_apple_charts, in_deezer_charts, in_shazam_charts, na.rm=T), 
+  total_playlists=sum(in_spotify_playlists, in_apple_playlists, in_deezer_playlists, na.rm=T)) %>% 
+  ggplot(aes(x=`key`, y=total_playlists))+
+  geom_col()
+```
+
+
+
+
+How does Energy % relate to how many times the track with in Spotify, Apple, Shazam, and Deezer charts?
+```{r}
+most_streamed %>% 
+  group_by(`energy_%`) %>% 
+  summarize(total_charts=sum(in_spotify_charts, in_apple_charts, in_deezer_charts, in_shazam_charts)) %>% 
+  ggplot(aes(x=`energy_%`, y=total_charts))+
+  geom_jitter()
+```
+
+
+
+```{r}
+playlist_type_most_streamed<-
+  most_streamed %>% 
+  select(in_spotify_playlists, in_apple_playlists, in_deezer_playlists, `artist(s)_name`) %>% 
+  filter(`artist(s)_name` == "The Weeknd" | 
+           `artist(s)_name` =="Ed Sheeran"|
+           `artist(s)_name` == "Taylor Swift" | 
+           `artist(s)_name` =="Harry Styles" | 
+           `artist(s)_name` == "Eminem")
+playlist_type_most_streamed
+```
+
+```{r}
+playlist_type_most_streamed <- playlist_type_most_streamed %>% 
+    pivot_longer(-`artist(s)_name`,
+                 names_to = "playlist_type", 
+                 values_to = "n_playlists")
+```
+
+
+
+```{r}
+playlist_type_most_streamed %>% 
+  ggplot(aes(x=`playlist_type`, y=n_playlists))+
+  geom_boxplot()+
+  scale_y_log10()+
+  facet_grid(.~`artist(s)_name`)+
+  coord_flip()
+  
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
