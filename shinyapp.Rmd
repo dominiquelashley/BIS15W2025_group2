@@ -53,44 +53,41 @@ ui <- dashboardPage(
       tabItem(tabName = "dashboard",
               h1("Spotify Wrapped: A Journey through Music Trends and Chart Insights"),
               h4("BIS15L Project: Group 2"),
-              h4("Group Members: Itzel")
+              h4("Group Members: Itzel,")
           ),
       
       ## Second tab item 
-      tabItem(tabName = "widgets",
-        fluidRow(
-          box(plotOutput("plot2", height = 250)), # box is a container for the plot
-          box(title = "Controls", # box is a container for the controls
-              radioButtons("x", 
-               "Select Fill Variable", 
-               choices=c("trophic.guild", "thermoregulation"),
-               selected="trophic.guild")
-          )
-          )
-          )
-          )
-          )
-          )
+      tabItem(tabName = "attribute",
+              h2("Relationships between Song Attributes"),
+              
+              fluidPage(
+                selectInput("x", 
+              "Select X Variable",
+              choices = c("danceability_percent", "valence_percent", "energy_percent", "acousticness_percent", "instrumentalness_percent", "liveness_percent", "speechiness_percent" ), 
+              selected = "danceability_percent"),
+              
+  selectInput("y", 
+              "Select Y Variable",
+              choices = c("danceability_percent", "valence_percent", "energy_percent", "acousticness_percent", "instrumentalness_percent", "liveness_percent", "speechiness_percent" ),
+              selected = "danceability_percent"),
+  
+  plotOutput("plot", width = "500px", height = "400px")
+              )
+      )
+    )
+  )
+)
 
 server <- function(input, output, session) {
-
-  output$plot1 <- renderPlot({
-
-    homerange %>%
-      filter(taxon == input$taxon) %>%
-      ggplot(aes(x = log10.hra)) + 
-      geom_density(color = "black", fill = "steelblue", alpha = 0.6)
-  })
+  session$onSessionEnded(stopApp)
   
-    output$plot2 <- renderPlot({
+  output$plot <- renderPlot({
     
-    homerange %>% 
-      ggplot(aes_string(x="locomotion", fill=input$x))+
-      geom_bar(position="dodge", alpha=0.8, color="black")+
-      labs(x=NULL, y=NULL, fill="Fill Variable")
-    
+    ggplot(data=spotify_data,
+    aes_string(x=input$x, y=input$y))+
+    geom_point(color = "#1ED760")+
+    theme_light(base_size = 14)
   })
-    
 }
 
 shinyApp(ui, server)
