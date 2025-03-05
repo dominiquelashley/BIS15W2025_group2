@@ -1,0 +1,59 @@
+---
+title: "Untitled"
+author: "Kali Gieschen"
+date: "2025-03-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(naniar)
+library(shiny)
+library(dplyr)
+
+most_streamed<-read_csv("~/Desktop/BIS15W2025_group2/Spotify Most Streamed Songs.csv")
+most_streamed %>% 
+  clean_names()
+```
+```{r}
+names(most_streamed)
+summary(most_streamed$in_spotify_charts)
+
+most_streamed %>% 
+  top_n(10, `danceability_%`) %>% 
+  ggplot(aes(x=track_name,y=`danceability_%`))+
+  geom_col()+
+  coord_flip()
+  
+```
+```{r}
+
+ui <- fluidPage(
+  
+    selectInput("x", 
+                "Select Variable", 
+                choices = c("valence_%","liveness_%",
+                            "instrumentalness_%","energy_%","speechiness_%","danceability_%" ), 
+                selected = "valence_%"),
+    
+    tableOutput("table")  
+)
+
+server <- function(input, output) {
+  
+  output$table <- renderTable({  
+    
+        most_streamed %>% 
+      arrange(desc(.data[[input$x]])) %>% 
+      select("track_name" , input$x) %>% 
+          head(10)
+    })
+}
+
+shinyApp(ui, server)
+```
