@@ -1,0 +1,99 @@
+---
+title: "bis15L_project"
+author: "Itzel Gonzalez"
+date: "2025-03-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load the Libraries  
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(shiny)
+library(shinydashboard)
+require(janitor)
+library(ggplot2)
+```
+
+```{r, eval=F, echo=T}
+ui <- dashboardPage(
+  skin = "green",
+  dashboardHeader(title = "Spotify Wrapped"),
+  
+  ## Sidebar content
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Home",
+               tabName = "dashboard",
+               icon = icon("home")),
+      
+      menuItem("Favorite Artists", 
+               tabName = "artist", 
+               icon = icon("user")),
+      
+      menuItem("Popular Songs", 
+               tabName = "songs", 
+               icon = icon("music")),
+     
+       menuItem("Song Attributes", 
+               tabName = "attribute", 
+               icon = icon("chart-simple"))
+      
+    )
+    ),
+  
+  ## Body content
+  dashboardBody(
+    tabItems(
+  
+      ## First tab content    
+      tabItem(tabName = "dashboard",
+              h1("Spotify Wrapped: A Journey through Music Trends and Chart Insights"),
+              h4("BIS15L Project: Group 2"),
+              h4("Group Members: Itzel")
+          ),
+      
+      ## Second tab item 
+      tabItem(tabName = "widgets",
+        fluidRow(
+          box(plotOutput("plot2", height = 250)), # box is a container for the plot
+          box(title = "Controls", # box is a container for the controls
+              radioButtons("x", 
+               "Select Fill Variable", 
+               choices=c("trophic.guild", "thermoregulation"),
+               selected="trophic.guild")
+          )
+          )
+          )
+          )
+          )
+          )
+
+server <- function(input, output, session) {
+
+  output$plot1 <- renderPlot({
+
+    homerange %>%
+      filter(taxon == input$taxon) %>%
+      ggplot(aes(x = log10.hra)) + 
+      geom_density(color = "black", fill = "steelblue", alpha = 0.6)
+  })
+  
+    output$plot2 <- renderPlot({
+    
+    homerange %>% 
+      ggplot(aes_string(x="locomotion", fill=input$x))+
+      geom_bar(position="dodge", alpha=0.8, color="black")+
+      labs(x=NULL, y=NULL, fill="Fill Variable")
+    
+  })
+    
+}
+
+shinyApp(ui, server)
+```
+
+
