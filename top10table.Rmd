@@ -36,7 +36,7 @@ most_streamed %>%
 ui <- fluidPage(
   
     selectInput("x", 
-                "Select Variable", 
+                "Select a Variable to See Top 10 Songs", 
                 choices = c("valence_%","liveness_%",
                             "instrumentalness_%","energy_%","speechiness_%","danceability_%" ), 
                 selected = "valence_%"),
@@ -50,7 +50,7 @@ server <- function(input, output) {
     
         most_streamed %>% 
       arrange(desc(.data[[input$x]])) %>% 
-      select("track_name" , input$x) %>% 
+      select("track_name" , "artist(s)_name",input$x) %>% 
           head(10)
     })
 }
