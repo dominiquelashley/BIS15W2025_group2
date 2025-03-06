@@ -9,6 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+most_streamed %>% 
+  filter(in_spotify_charts=="1")
+```
 
 
 ```{r}
