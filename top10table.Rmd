@@ -36,7 +36,7 @@ most_streamed %>%
 ui <- fluidPage(
   
     selectInput("x", 
-                "Select Variable", 
+                "Select a Variable to See Top 10 Songs", 
                 choices = c("valence_%","liveness_%",
                             "instrumentalness_%","energy_%","speechiness_%","danceability_%" ), 
                 selected = "valence_%"),
