@@ -1,0 +1,62 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-03-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(naniar)
+library(shiny)
+library(dplyr)
+```
+
+```{r}
+spotify_data <- read_csv("~/Desktop/BIS15W2025_group2/Spotify Most Streamed Songs.csv") %>% clean_names()
+
+glimpse(spotify_data)
+```
+
+```{r}
+spotify_data %>% 
+  mutate(month = as.factor(released_month)) %>%  
+  mutate(streams=as.numeric(streams)) %>% 
+  group_by(month) %>% 
+  summarise(total_streams = sum(streams,na.rm=T)) %>%  
+  ggplot(aes(x = month, y = total_streams)) + 
+  geom_col() 
+```
+```{r}
+
+ui <- fluidPage(
+  
+    selectInput("x", 
+                "Seleced a Released Variable", 
+                choices = c("released_month","released_year","released_day"), 
+                selected = "released_month"),
+    
+    plotOutput("plot")  
+)
+
+server <- function(input, output) {
+  
+  output$plot <- renderPlot({  
+    
+    
+    spotify_data %>% 
+  mutate(factor = as.factor(input$x)) %>%  
+  mutate(streams=as.numeric(streams,na.rm=T)) %>% 
+  group_by(factor) %>% 
+  summarise(total_streams = sum(streams,na.rm=T)) %>%  
+  ggplot(aes(x = input$x, y = total_streams)) + 
+  geom_col() 
+    })
+}
+
+shinyApp(ui, server)
+```
