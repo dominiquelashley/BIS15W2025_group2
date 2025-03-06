@@ -16,6 +16,7 @@ library(shiny)
 library(shinydashboard)
 require(janitor)
 library(ggplot2)
+library(bslib)
 ```
 
 ```{r}
@@ -52,8 +53,6 @@ spotify_data_long <- spotify_data %>%
                names_to = "attribute",
                values_to = "percent") %>% 
   select(released_year, attribute, percent)
-
-spotify_data_long
 ```
 
 ```{r, eval=F, echo=T}
