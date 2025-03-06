@@ -26,7 +26,7 @@ spotify_data <- read_csv("~/Desktop/BIS15W2025_group2/Spotify Most Streamed Song
 
 
 ```{r}
-# Filtered data frame from the app
+# top streams, charts and playlists by artists
 artist_app_data <- spotify_data %>% 
   mutate(streams=as.numeric(streams, na.rm=T)) %>%
   group_by(artist_s_name) %>% 
@@ -36,7 +36,7 @@ artist_app_data <- spotify_data %>%
 ```
 
 ```{r}
-# Filtered data frame from the app
+# top streams, charts and playlists by songs
 song_app_data <-
   spotify_data %>% 
   mutate(streams=as.numeric(streams, na.rm=T)) %>%
@@ -54,6 +54,16 @@ spotify_data_long <- spotify_data %>%
                values_to = "percent") %>% 
   select(released_year, attribute, percent)
 ```
+
+```{r}
+# top 10 songs table
+spotify_data %>% 
+  top_n(10, danceability_percent) %>% 
+  ggplot(aes(x=track_name,y= danceability_percent))+
+  geom_col()+
+  coord_flip()
+```
+
 
 ```{r, eval=F, echo=T}
 ui <- dashboardPage(
@@ -78,6 +88,10 @@ ui <- dashboardPage(
       menuItem("Top Songs", 
                tabName = "songs", 
                icon = icon("music")),
+      
+      menuItem("Top 10 Songs Based on Mood",
+           tabName = "mood",
+           icon = icon("heart")),
      
       menuItem("Song Attributes", 
                tabName = "attribute", 
@@ -180,7 +194,8 @@ ui <- dashboardPage(
               fluidPage(
                 selectInput("x",
                           "Select Attribute:",
-                          choices = c("danceability_percent", "valence_percent", "energy_percent", "acousticness_percent",
+                          choices = c("danceability_percent", "valence_percent", "energy_percent",
+                                      "acousticness_percent",
                                       "instrumentalness_percent", "liveness_percent", "speechiness_percent"),
                           selected = "danceability_percent"),
               plotOutput("lineplot",  width = "500px", height = "400px")
@@ -200,6 +215,21 @@ ui <- dashboardPage(
          plotOutput("barplot")
         )
 ),
+
+  tabItem(tabName = "mood",
+          h2("Top 10 Songs Based on Mood"),
+          
+          fluidPage(
+            selectInput("x", 
+                "Select Attribute", 
+                choices = c("danceability_percent", "valence_percent", "energy_percent",
+                            "acousticness_percent","instrumentalness_percent", 
+                            "liveness_percent", "speechiness_percent"),
+                selected = "valence_percent"),
+    
+    tableOutput("table")
+          )
+  ),
 
 
   tabItem(tabName = "songs",
@@ -230,9 +260,8 @@ server <- function(input, output, session) {
   
   
   output$attribute_plot <- renderPlot({
-    
-    ggplot(data=spotify_data,
-    aes_string(x=input$x, y=input$y))+
+    spotify_data %>% 
+    ggplot(aes_string(x=input$x, y=input$y))+
     geom_point(color = "#1ED760")+
     theme_light(base_size = 14)
   })
@@ -242,7 +271,6 @@ server <- function(input, output, session) {
     spotify_data_long %>% 
       filter(attribute==input$x) %>% 
       group_by(released_year, attribute) %>%
-      group_by(released_year, attribute) %>%  # This line might cause redundancy; one `group_by` is enough
       ggplot(aes(x=released_year, y=percent))+
       geom_line(color = "#1ED760")
   })
@@ -259,6 +287,14 @@ server <- function(input, output, session) {
       geom_col(fill = "#1DB954")+
       labs(x="Artist", y="Metric")+
       theme_classic()
+  })
+  
+  output$table <- renderTable({
+    
+    spotify_data %>% 
+      arrange(desc(.data[[input$x]])) %>% 
+      select("track_name", "artist_s_name", input$x) %>% 
+      head(10)
   })
   
    output$barplot2 <- renderPlot({
