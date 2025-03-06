@@ -24,20 +24,29 @@ spotify_data <- read_csv("~/Desktop/BIS15W2025_group2/Spotify Most Streamed Song
 ```
 
 ```{r}
-glimpse(spotify_data)
+
 ```
 
 ```{r}
 # Filtered data frame from the app
 artist_app_data <- spotify_data %>% 
-  mutate(streams=as.numeric(streams, na.rm=TRUE)) %>%
+  mutate(streams=as.numeric(streams, na.rm=T)) %>%
   group_by(artist_s_name) %>% 
-  summarize(total_streams=sum(streams, na.rm=TRUE),
-            total_charts=sum(in_spotify_charts, na.rm=TRUE),
-            total_playlists=sum(in_spotify_playlists, na.rm=TRUE))
+  summarize(total_streams=sum(streams, na.rm=T),
+            total_charts=sum(in_spotify_charts, na.rm=T),
+            total_playlists=sum(in_spotify_playlists, na.rm=T))
 ```
 
-
+```{r}
+# Filtered data frame from the app
+song_app_data <-
+  spotify_data %>% 
+  mutate(streams=as.numeric(streams, na.rm=T)) %>%
+  group_by(track_name) %>% 
+  summarize(total_streams=sum(streams, na.rm = T),
+            total_charts=sum(in_spotify_charts, na.rm = T),
+            total_playlists=sum(in_spotify_playlists, na.rm = T))
+```
 
 ```{r}
 # using pivot longer to have a list of the attributes
@@ -50,14 +59,8 @@ spotify_data_long <- spotify_data %>%
 spotify_data_long
 ```
 
-```{r}
-
-```
-
-
 ```{r, eval=F, echo=T}
 ui <- dashboardPage(
-  skin = "green",
   dashboardHeader(title = "Spotify Wrapped"),
   
   ## Sidebar content
@@ -66,6 +69,11 @@ ui <- dashboardPage(
       menuItem("Home",
                tabName = "dashboard",
                icon = icon("home")),
+     
+      menuItem("Background",
+               icon = icon("list"),
+               menuSubItem("Introduction", tabName = "introduction"),
+               menuSubItem("Methods", tabName = "methods")),
       
       menuItem("Top Artists", 
                tabName = "artist", 
@@ -75,29 +83,84 @@ ui <- dashboardPage(
                tabName = "songs", 
                icon = icon("music")),
      
-       menuItem("Song Attributes", 
+      menuItem("Song Attributes", 
                tabName = "attribute", 
                icon = icon("chart-simple")),
       
       menuItem("Attributes Over Time",
                tabName = "history",
-               icon = icon("calendar-days"))
+               icon = icon("calendar-days")),
+      
+      menuItem("Summary",
+               tabName = "summary",
+               icon = icon("clipboard-check"))
       
     )
     ),
   
   ## Body content
-  dashboardBody(
+ dashboardBody(
+  theme = bs_theme(
+    bootswatch = "darkly",
+    primary = "#1DB954"
+  ),
+  tags$style(HTML("
+    body, .content-wrapper, .main-sidebar, .main-header {
+      background-color: #000000 !important;
+      color: #FFFFFF !important;
+    }
+    .box {
+      background-color: #2f2f2f !important;
+      color: #FFFFFF !important;
+    }
+    .sidebar-menu > li > a {
+      color: #FFFFFF !important;
+    }
+    .navbar, .sidebar {
+      background-color: #000000 !important;
+    }
+    .main-header .navbar {
+      background-color: #1DB954 !important;
+    }
+    .main-header .logo {
+      background-color: #1DB954 !important;
+    }
+    .skin-green .sidebar-menu > li.active > a {
+      background-color: #1DB954 !important;
+    }
+    
+    ")),
+    
     tabItems(
   
       ## First tab content    
       tabItem(tabName = "dashboard",
-              h1("Spotify Wrapped: A Journey through Music Trends and Chart Insights"),
-              h4("BIS15L Project: Group 2"),
-              h4("Group Members: Itzel,")
-          ),
+              fluidRow(
+          tags$div(style = "display: flex; justify-content: center; align-items: center;",
+                   imageOutput("cover", height = "auto", width = "100%")
+          )
+        )
+),
+
+      tabItem(tabName = "introduction",
+               tags$h1("Introduction"),
+               tags$h2("About This Project")
+               ),
+
+     
+      tabItem(tabName = "methods",
+              tags$h1("Methods"),
+              
+              tags$h3("Data Collection"),
+              
+              tags$h3("Preprocessing"),
+              tags$ul(
+                tags$li(" xyz"),
+                tags$li("abc")
+              )),
+      
       tabItem(tabName = "attribute",
-              h2("Relationships between Song Attributes"),
+              tags$h2("Relationships between Song Attributes"),
               
               fluidPage(
                 selectInput("x", 
@@ -130,23 +193,45 @@ ui <- dashboardPage(
           ),
         
   tabItem(tabName = "artist",
-                h2("Top 10 Spotify Artists by Category"),
-                
-                fluidPage(
-                  selectInput("y", "Select Ranking Metric:",
-                              choices = c("Most Streams" = "total_streams","Most Songs on Charts" = "total_charts",
-                                          "Most Songs in Playlists" = "total_playlists"),
-                              selected="total_streams"),
-                  plotOutput("barplot")
-                )
-  )
-    )
+        h2("Top 10 Spotify Artists by Category"),
+        
+        fluidPage(
+        selectInput("y", "Select Ranking Metric:",
+                    choices = c("Most Streams" = "total_streams",
+                                "Most Songs on Charts" = "total_charts",
+                                "Most Songs in Playlists" = "total_playlists"),
+                    selected="total_streams"),
+         plotOutput("barplot")
+        )
+),
+
+
+  tabItem(tabName = "songs",
+          h2("Top 10 Spotify Songs by Category"),
+          
+          fluidPage(
+            selectInput("y", "Select Ranking Metric:",
+                        choices = c("Most Streams" = "total_streams",
+                          "Most Songs on Charts" = "total_charts",
+                          "Most Songs in Playlists" = "total_playlists"),
+                        
+                        selected="total_streams"),
+            
+            plotOutput("barplot2")
+          )
   )
 )
+)
+)
 
-    
 server <- function(input, output, session) {
   session$onSessionEnded(stopApp)
+  
+  output$cover <- renderImage({
+  list(src = "cover.png", contentType = "image/png", alt = "Cover Image",
+       width = "100%", height = "auto")  # Let height adjust automatically
+}, deleteFile = FALSE)
+  
   
   output$attribute_plot <- renderPlot({
     
@@ -161,7 +246,7 @@ server <- function(input, output, session) {
     spotify_data_long %>% 
       filter(attribute==input$x) %>% 
       group_by(released_year, attribute) %>%
-      group_by(released_year, attribute) %>%
+      group_by(released_year, attribute) %>%  # This line might cause redundancy; one `group_by` is enough
       ggplot(aes(x=released_year, y=percent))+
       geom_line(color = "#1ED760")
   })
@@ -179,8 +264,24 @@ server <- function(input, output, session) {
       labs(x="Artist", y="Metric")+
       theme_classic()
   })
+  
+   output$barplot2 <- renderPlot({
+    top_songs <- song_app_data %>%
+      arrange(desc(!!sym(input$y))) %>%  # Sort by selected metric
+      head(10)
+    
+    
+    ggplot(data=top_songs, 
+           aes_string(x="`track_name`", y=input$y))+
+      geom_col(fill = "#1DB954")+
+      coord_flip()+
+      labs(x="Song", y="Metric")+
+      theme_classic()
+  })
 }
 
 shinyApp(ui, server)
 ```
+
+
 
