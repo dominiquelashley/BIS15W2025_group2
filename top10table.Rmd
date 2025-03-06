@@ -50,7 +50,7 @@ server <- function(input, output) {
     
         most_streamed %>% 
       arrange(desc(.data[[input$x]])) %>% 
-      select("track_name" , input$x) %>% 
+      select("track_name" , "artist(s)_name",input$x) %>% 
           head(10)
     })
 }
