@@ -130,7 +130,7 @@ artist_app_data <-
   mutate(streams=as.numeric(streams, na.rm=T)) %>%
   group_by(`artist(s)_name`) %>% 
   summarize(total_streams=sum(streams),
-            total_charts=sum(in_spotify_charts),
+            total_charts=sum(n_distinct(track_name)),
             total_playlists=sum(in_spotify_playlists))
 ```
 

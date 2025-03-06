@@ -9,13 +9,14 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+
 ```{r}
 song_app_data <-
   most_streamed %>% 
   mutate(streams=as.numeric(streams, na.rm=T)) %>%
   group_by(track_name) %>% 
   summarize(total_streams=sum(streams),
-            total_charts=sum(in_spotify_charts),
             total_playlists=sum(in_spotify_playlists))
 ```
 
@@ -27,7 +28,6 @@ ui <- fluidPage(
     
     selectInput("y", "Select Ranking Metric:",
                 choices = c("Most Streams" = "total_streams",
-                            "Most Songs on Charts" = "total_charts",
                             "Most Songs in Playlists" = "total_playlists"),
     selected="total_streams"),
     
