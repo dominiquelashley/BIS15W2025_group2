@@ -1,0 +1,178 @@
+---
+title: "Project Graphs"
+author: "Dominique Lashley"
+date: "2025-03-05"
+output: html_document
+---
+```{r}
+#install.packages("DT")
+```
+
+```{r}
+library(tidyverse)
+library(shiny)
+library(shinydashboard)
+library(dplyr)
+library(DT)
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(janitor)
+library(naniar)
+``` 
+
+```{r}
+options(scipen = 999)
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+most_streamed<-read_csv("~/Desktop/BIS15W2025_group2/Spotify Most Streamed Songs.csv")
+most_streamed %>% 
+  clean_names()
+```
+
+
+## Top artists in charts
+```{r}
+most_streamed %>% 
+  group_by(`artist(s)_name`) %>% 
+  summarize(total_charts=sum(in_spotify_charts)) %>% 
+  arrange(-total_charts)
+```
+
+
+```{r}
+top_artists_charts<- most_streamed %>% 
+  filter(`artist(s)_name`=="Taylor Swift" | `artist(s)_name`=="Bad Bunny" | `artist(s)_name`=="Arctic Monkeys" | `artist(s)_name`=="Harry Styles" | `artist(s)_name`=="The Weeknd" | `artist(s)_name`=="NewJeans" | `artist(s)_name`=="Feid" | `artist(s)_name`=="Eminem" | `artist(s)_name`=="Karol G" | `artist(s)_name`=="Latto, Jung Kook")
+```
+
+```{r}
+top_artists_charts %>% 
+  group_by(`artist(s)_name`) %>% 
+  summarize(total_charts=sum(in_spotify_charts)) %>% 
+  ggplot(aes(x=reorder(`artist(s)_name`, total_charts), y=total_charts))+
+  geom_col(fill = "#1DB954")+
+  coord_flip()+
+  theme_classic()+
+  labs(title="Top 10 Artists in Total Spotify Charts", 
+       x="Artist", 
+       y="Total Charts")+
+  theme(plot.title = element_text(size = 14))
+  
+```
+## Top Artists in Spotify Playlists
+```{r}
+most_streamed %>% 
+  group_by(`artist(s)_name`) %>% 
+  summarize(total_playlists=sum(in_spotify_playlists)) %>% 
+  arrange(-total_playlists)
+```
+```{r}
+top_artists_playlists<- most_streamed %>% 
+  filter(`artist(s)_name`=="The Weeknd" | `artist(s)_name`=="Taylor Swift" | `artist(s)_name`=="Ed Sheeran" | `artist(s)_name`=="Harry Styles" | `artist(s)_name`=="Eminem" | `artist(s)_name`=="Arctic Monkeys" | `artist(s)_name`=="Coldplay" | `artist(s)_name`=="Avicii" | `artist(s)_name`=="Dr. Dre, Snoop Dogg" | `artist(s)_name`=="Adele")
+```
+
+```{r}
+top_artists_playlists %>% 
+group_by(`artist(s)_name`) %>% 
+  summarize(total_playlists=sum(in_spotify_playlists)) %>% 
+  ggplot(aes(x=reorder(`artist(s)_name`, total_playlists), y=total_playlists))+
+  geom_col(fill = "#1DB954")+
+  coord_flip()+
+  theme_classic()+
+  labs(title="Top 10 Artists in Total Spotify Playlists", 
+       x="Artist", 
+       y="Total Playlists")+
+  theme(plot.title = element_text(size = 14))
+```
+## Top Artist Streams
+```{r}
+most_streamed %>% 
+  mutate(streams=as.numeric(streams)) %>% 
+  group_by(`artist(s)_name`) %>% 
+  summarize(total_streams=sum(streams)) %>% 
+  arrange(-total_streams)
+```
+```{r}
+top_artists_streamed<- most_streamed %>% 
+  mutate(streams=as.numeric(streams, na.rm=T)) %>% 
+  filter(`artist(s)_name`=="The Weeknd" | `artist(s)_name`=="Taylor Swift" | `artist(s)_name`=="Ed Sheeran" | `artist(s)_name`=="Harry Styles" | `artist(s)_name`=="Bad Bunny" | `artist(s)_name`=="Olivia Rodrigo" | `artist(s)_name`=="Eminem" | `artist(s)_name`=="Bruno Mars" | `artist(s)_name`=="Arctic Monkeys" | `artist(s)_name`=="Imagine Dragons")
+```
+
+```{r}
+top_artists_streamed %>% 
+  mutate(streams=as.numeric(streams)) %>% 
+group_by(`artist(s)_name`) %>% 
+  summarize(total_streams=sum(streams)) %>% 
+  ggplot(aes(x=reorder(`artist(s)_name`, total_streams), y=total_streams))+
+  geom_col(fill = "#1DB954")+
+  coord_flip()+
+  theme_classic()+
+  labs(title="Top 10 Streamed Artists", 
+       x="Artist", 
+       y="Total Streams")+
+  theme(plot.title = element_text(size = 14))
+```
+```{r}
+artist_app_data <-
+  most_streamed %>% 
+  mutate(streams=as.numeric(streams, na.rm=T)) %>%
+  group_by(`artist(s)_name`) %>% 
+  summarize(total_streams=sum(streams),
+            total_charts=sum(in_spotify_charts),
+            total_playlists=sum(in_spotify_playlists))
+```
+
+
+```{r}
+  
+# Define UI
+ui <- fluidPage(
+    titlePanel("Top 10 Spotify Artists by Category"),
+    
+    selectInput("y", "Select Ranking Metric:",
+                choices = c("Most Streams" = "total_streams",
+                            "Most Songs on Charts" = "total_charts",
+                            "Most Songs in Playlists" = "total_playlists"),
+    selected="total_streams"),
+    
+ plotOutput("plot")
+)
+
+
+server <- function(input, output, session) {
+  
+  
+  
+  output$plot <- renderPlot({
+    top_artists <- artist_app_data %>%
+            arrange(desc(!!sym(input$y))) %>%  # Sort by selected metric
+            head(10)
+    
+    
+    ggplot(data=top_artists, 
+           aes_string(x="`artist(s)_name`", y=input$y))+
+      geom_col(fill = "#1DB954")+
+      labs(x="Artist", y="Metric")+
+      theme_classic()
+})
+}
+
+shinyApp(ui, server)
+
+```
+
+
+
+
