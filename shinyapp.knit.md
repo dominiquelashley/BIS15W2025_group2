@@ -5,12 +5,11 @@ date: "2025-03-05"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 ## Load the Libraries  
-```{r message=FALSE, warning=FALSE}
+
+``` r
 library(tidyverse)
 library(shiny)
 library(shinydashboard)
@@ -18,11 +17,10 @@ require(janitor)
 library(ggplot2)
 ```
 
-```{r}
 
-```
 
-```{r, eval=F, echo=T}
+
+``` r
 ui <- dashboardPage(
   skin = "green",
   dashboardHeader(title = "Spotify Wrapped"),
