@@ -23,9 +23,6 @@ library(ggplot2)
 spotify_data <- read_csv("~/Desktop/BIS15W2025_group2/Spotify Most Streamed Songs.csv") %>% clean_names()
 ```
 
-```{r}
-
-```
 
 ```{r}
 # Filtered data frame from the app
