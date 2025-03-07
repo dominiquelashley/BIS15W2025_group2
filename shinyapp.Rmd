@@ -22,6 +22,9 @@ library(bslib)
 ```{r}
 # load the data
 spotify_data <- read_csv("~/Desktop/BIS15W2025_group2/Spotify Most Streamed Songs.csv") %>% clean_names()
+#this is the only way I was able to work on it on my computer, ill delete it when Im done working.
+#spotify_data <- read_csv("C:/Users/samee/OneDrive/Documents/BIS15W2025_group2/Spotify Most Streamed Songs.csv") %>% clean_names()
+
 ```
 
 
