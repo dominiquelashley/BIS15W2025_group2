@@ -155,7 +155,7 @@ ui <- dashboardPage(
       tabItem(tabName = "introduction",
               tags$h1("Introduction"),
               tags$h2("About This Project"),
-              tags$h3("In this project we aim to summarize and explain the trends seen in spotify top songs collected in 2023. Our inspiration for the project is the Spotify Wrpped summaries that come out each year, but instead of individual reports per person we use global spotify data for this project.")
+              tags$h3("In this project we aim to summarize and explain the trends seen in spotify top songs collected in 2023. Our inspiration for the project is the Spotify Wrapped summaries that come out each year, but instead of individual reports per person we use global spotify data for this project.")
       ),
       
       ## Methods Tab
