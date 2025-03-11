@@ -266,7 +266,10 @@ server <- function(input, output, session) {
     spotify_data %>% 
     ggplot(aes_string(x=input$x, y=input$y))+
     geom_point(color = "#1ED760")+
-    theme_light(base_size = 14)
+    theme_light(base_size = 14)+
+      labs(x = str_to_title(str_replace_all(input$x, "_", " ")), 
+           y = str_to_title(str_replace_all(input$y, "_", " ")))+
+      theme(plot.title = element_text(hjust = 0.5))
   })
   
   output$lineplot <- renderPlot({
@@ -275,7 +278,9 @@ server <- function(input, output, session) {
       filter(attribute==input$x) %>% 
       group_by(released_year, attribute) %>%
       ggplot(aes(x=released_year, y=percent))+
-      geom_line(color = "#1ED760")
+      geom_line(color = "#1ED760")+
+      labs(x = str_to_title(str_replace_all(input$x, "_", " ")), y = "Percent")+
+    theme(plot.title = element_text(hjust = 0.5))
   })
   
   output$barplot <- renderPlot({
@@ -289,7 +294,8 @@ server <- function(input, output, session) {
            aes_string(x="`artist_s_name`", y=input$y))+
       geom_col(fill = "#1DB954")+
       labs(x="Artist", y="Metric")+
-      theme_classic()
+      theme_classic()+
+      scale_y_continuous(labels = scales::comma)
   })
   
   output$table <- renderTable({
@@ -311,7 +317,8 @@ server <- function(input, output, session) {
       geom_col(fill = "#1DB954")+
       coord_flip()+
       labs(x="Song", y="Metric")+
-      theme_classic()
+      theme_classic()+
+      scale_y_continuous(labels = scales::comma)
   })
 }
 
