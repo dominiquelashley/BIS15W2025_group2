@@ -104,11 +104,8 @@ ui <- dashboardPage(
       
       menuItem("Attributes Over Time",
                tabName = "history",
-               icon = icon("calendar-days")),
-      
-      menuItem("Summary",
-               tabName = "summary",
-               icon = icon("clipboard-check"))
+               icon = icon("calendar-days"))
+    
     )
   ),
   
@@ -262,7 +259,7 @@ server <- function(input, output, session) {
   session$onSessionEnded(stopApp)
   
   output$cover <- renderImage({
-    list(src = "cover.png", contentType = "image/png", alt = "Cover Image",
+    list(src = "cover2.png", contentType = "image/png", alt = "Cover Image",
          width = "100%", height = "auto")  # Let height adjust automatically
   }, deleteFile = FALSE)
   
