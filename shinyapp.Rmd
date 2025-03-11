@@ -157,8 +157,8 @@ ui <- dashboardPage(
 
       tabItem(tabName = "introduction",
                tags$h1("Introduction"),
-               tags$h2("About This Project")
-               ),
+               tags$h2("About This Project"),
+               tags$h3("Data was collected from Kaggle.com")),
 
      
       tabItem(tabName = "methods",
