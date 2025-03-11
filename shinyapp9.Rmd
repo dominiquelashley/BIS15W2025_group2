@@ -34,7 +34,7 @@ artist_app_data <- spotify_data %>%
   mutate(streams=as.numeric(streams, na.rm=T)) %>%
   group_by(artist_s_name) %>% 
   summarize(total_streams=sum(streams, na.rm=T),
-            total_charts=sum(in_spotify_charts, na.rm=T),
+            total_charts=sum(n_distinct(track_name), na.rm=T),
             total_playlists=sum(in_spotify_playlists, na.rm=T))
 ```
 
@@ -45,7 +45,6 @@ song_app_data <-
   mutate(streams=as.numeric(streams, na.rm=T)) %>%
   group_by(track_name) %>% 
   summarize(total_streams=sum(streams, na.rm = T),
-            total_charts=sum(in_spotify_charts, na.rm = T),
             total_playlists=sum(in_spotify_playlists, na.rm = T))
 ```
 
@@ -66,265 +65,6 @@ spotify_data %>%
   geom_col()+
   coord_flip()
 ```
-
-
-```{r, eval=F, echo=T}
-ui <- dashboardPage(
-  dashboardHeader(title = "Spotify Wrapped"),
-  
-  ## Sidebar content
-  dashboardSidebar(
-    sidebarMenu(
-      menuItem("Home",
-               tabName = "dashboard",
-               icon = icon("home")),
-     
-      menuItem("Background",
-               icon = icon("list"),
-               menuSubItem("Introduction", tabName = "introduction"),
-               menuSubItem("Methods", tabName = "methods")),
-      
-      menuItem("Top Artists", 
-               tabName = "artist", 
-               icon = icon("user")),
-      
-      menuItem("Top Songs", 
-               tabName = "songs", 
-               icon = icon("music")),
-      
-      menuItem("Top 10 Songs Based on Mood",
-           tabName = "mood",
-           icon = icon("heart")),
-     
-      menuItem("Song Attributes", 
-               tabName = "attribute", 
-               icon = icon("chart-simple")),
-      
-      menuItem("Attributes Over Time",
-               tabName = "history",
-               icon = icon("calendar-days")),
-      
-      menuItem("Summary",
-               tabName = "summary",
-               icon = icon("clipboard-check"))
-      
-    )
-    ),
-  
-  ## Body content
- dashboardBody(
-  theme = bs_theme(
-    bootswatch = "darkly",
-    primary = "#1DB954"
-  ),
-  tags$style(HTML("
-    body, .content-wrapper, .main-sidebar, .main-header {
-      background-color: #000000 !important;
-      color: #FFFFFF !important;
-    }
-    .box {
-      background-color: #2f2f2f !important;
-      color: #FFFFFF !important;
-    }
-    .sidebar-menu > li > a {
-      color: #FFFFFF !important;
-    }
-    .navbar, .sidebar {
-      background-color: #000000 !important;
-    }
-    .main-header .navbar {
-      background-color: #1DB954 !important;
-    }
-    .main-header .logo {
-      background-color: #1DB954 !important;
-    }
-    .skin-green .sidebar-menu > li.active > a {
-      background-color: #1DB954 !important;
-    }
-    
-    ")),
-    
-    tabItems(
-  
-      ## First tab content    
-      tabItem(tabName = "dashboard",
-              fluidRow(
-          tags$div(style = "display: flex; justify-content: center; align-items: center;",
-                   imageOutput("cover", height = "auto", width = "100%")
-          )
-        )
-),
-
-      tabItem(tabName = "introduction",
-               tags$h1("Introduction"),
-               tags$h2("About This Project"),
-               tags$h3("Data was collected from Kaggle.com")),
-
-     
-      tabItem(tabName = "methods",
-              tags$h1("Methods"),
-              
-              tags$h3("Data Collection"),
-              
-              tags$h3("Preprocessing"),
-              tags$ul(
-                tags$li(" xyz"),
-                tags$li("abc")
-              )),
-      
-      tabItem(tabName = "attribute",
-              tags$h2("Relationships between Song Attributes"),
-              
-              fluidPage(
-                selectInput("x", 
-              "Select X Variable",
-              choices = c("danceability_percent", "valence_percent", "energy_percent", "acousticness_percent", 
-                          "instrumentalness_percent", "liveness_percent", "speechiness_percent" ), 
-              selected = "danceability_percent"),
-              
-                selectInput("y", 
-              "Select Y Variable",
-              choices = c("danceability_percent", "valence_percent", "energy_percent", "acousticness_percent", 
-                          "instrumentalness_percent", "liveness_percent", "speechiness_percent" ),
-              selected = "danceability_percent"),
-  
-  plotOutput("attribute_plot", width = "500px", height = "400px")
-              )
-      ),
-  tabItem(tabName= "history",
-              h2("Song Attributes Over the Years"),
-          
-              fluidPage(
-                selectInput("x",
-                          "Select Attribute:",
-                          choices = c("danceability_percent", "valence_percent", "energy_percent",
-                                      "acousticness_percent",
-                                      "instrumentalness_percent", "liveness_percent", "speechiness_percent"),
-                          selected = "danceability_percent"),
-              plotOutput("lineplot",  width = "500px", height = "400px")
-            
-          )
-          ),
-        
-  tabItem(tabName = "artist",
-        h2("Top 10 Spotify Artists by Category"),
-        
-        fluidPage(
-        selectInput("y", "Select Ranking Metric:",
-                    choices = c("Most Streams" = "total_streams",
-                                "Most Songs on Charts" = "total_charts",
-                                "Most Songs in Playlists" = "total_playlists"),
-                    selected="total_streams"),
-         plotOutput("barplot")
-        )
-),
-
-  tabItem(tabName = "mood",
-          h2("Top 10 Songs Based on Mood"),
-          
-          fluidPage(
-            selectInput("x", 
-                "Select Attribute", 
-                choices = c("danceability_percent", "valence_percent", "energy_percent",
-                            "acousticness_percent","instrumentalness_percent", 
-                            "liveness_percent", "speechiness_percent"),
-                selected = "valence_percent"),
-    
-    tableOutput("table")
-          )
-  ),
-
-
-  tabItem(tabName = "songs",
-          h2("Top 10 Spotify Songs by Category"),
-          
-          fluidPage(
-            selectInput("y", "Select Ranking Metric:",
-                        choices = c("Most Streams" = "total_streams",
-                          "Most Songs on Charts" = "total_charts",
-                          "Most Songs in Playlists" = "total_playlists"),
-                        
-                        selected="total_streams"),
-            
-            plotOutput("barplot2")
-          )
-  )
-)
-)
-)
-
-server <- function(input, output, session) {
-  session$onSessionEnded(stopApp)
-  
-  output$cover <- renderImage({
-  list(src = "cover.png", contentType = "image/png", alt = "Cover Image",
-       width = "100%", height = "auto")  # Let height adjust automatically
-}, deleteFile = FALSE)
-  
-  
-  output$attribute_plot <- renderPlot({
-    spotify_data %>% 
-    ggplot(aes_string(x=input$x, y=input$y))+
-    geom_point(color = "#1ED760")+
-    theme_light(base_size = 14)+
-      labs(x = str_to_title(str_replace_all(input$x, "_", " ")), 
-           y = str_to_title(str_replace_all(input$y, "_", " ")))+
-      theme(plot.title = element_text(hjust = 0.5))
-  })
-  
-  output$lineplot <- renderPlot({
-    
-    spotify_data_long %>% 
-      filter(attribute==input$x) %>% 
-      group_by(released_year, attribute) %>%
-      ggplot(aes(x=released_year, y=percent))+
-      geom_line(color = "#1ED760")+
-      labs(x = str_to_title(str_replace_all(input$x, "_", " ")), y = "Percent")+
-    theme(plot.title = element_text(hjust = 0.5))
-  })
-  
-  output$barplot <- renderPlot({
-    
-    top_artists <- artist_app_data %>%
-      arrange(desc(!!sym(input$y))) %>%  # Sort by selected metric
-      head(10)
-    
-    
-    ggplot(data=top_artists, 
-           aes_string(x="`artist_s_name`", y=input$y))+
-      geom_col(fill = "#1DB954")+
-      labs(x="Artist", y="Metric")+
-      theme_classic()+
-      scale_y_continuous(labels = scales::comma)
-  })
-  
-  output$table <- renderTable({
-    
-    spotify_data %>% 
-      arrange(desc(.data[[input$x]])) %>% 
-      select("track_name", "artist_s_name", input$x) %>% 
-      head(10)
-  })
-  
-   output$barplot2 <- renderPlot({
-    top_songs <- song_app_data %>%
-      arrange(desc(!!sym(input$y))) %>%  # Sort by selected metric
-      head(10)
-    
-    
-    ggplot(data=top_songs, 
-           aes_string(x="`track_name`", y=input$y))+
-      geom_col(fill = "#1DB954")+
-      coord_flip()+
-      labs(x="Song", y="Metric")+
-      theme_classic()+
-      scale_y_continuous(labels = scales::comma)
-  })
-}
-
-shinyApp(ui, server)
-```
-
 
 
 
@@ -418,19 +158,30 @@ ui <- dashboardPage(
       tabItem(tabName = "introduction",
               tags$h1("Introduction"),
               tags$h2("About This Project"),
-              tags$h3("Data was collected from Kaggle.com")
+              tags$h3("In this project we aim to summarize and explain the trends seen in spotify top songs collected in 2023. Our inspiration for the project is the Spotify Wrpped summaries that come out each year, but instead of individual reports per person we use global spotify data for this project.")
       ),
       
       ## Methods Tab
       tabItem(tabName = "methods",
               tags$h1("Methods"),
               tags$h3("Data Collection"),
-              tags$h3("Preprocessing"),
+              tags$p("“Spotify Most Streamed Songs Dataset” is a dataset from Kaggle, the owner is Muhammad Abdullah. The data was collected in 2023."),
+              
+              tags$h3("About the Data"),
+              tags$h4("Variables"),
               tags$ul(
-                tags$li(" xyz"),
-                tags$li("abc")
-              )
-      ),
+                tags$li(" in_spotify_playlists: Number of Spotify playlists the song is featured in"),
+                tags$li("in_spotify_charts: Rank of the song on Spotify charts"),
+                tags$li("streams: Total number of streams on Spotify"),
+                tags$li("bpm: Beats per minute, representing the tempo of the song"),
+                tags$li("danceability_%: Suitability of the song for dancing"),
+                tags$li("valence_%: Positivity of the song’s musical content"),
+                tags$li("energy_%: Perceived energy level of the song"),
+                tags$li("acousticness_%: Acoustic sound presence in the song"),
+                tags$li("instrumentalness_%: Proportion of instrumental content in the track"),
+                tags$li("liveness_%: Presence of live performance elements"),
+                tags$li("speechiness_%: Amount of spoken words in the song"),
+              )),
       
       ## Song Attributes Tab
       tabItem(tabName = "attribute",
@@ -497,7 +248,7 @@ ui <- dashboardPage(
               fluidPage(
                 selectInput("songs_y", "Select Ranking Metric:",
                             choices = c("Most Streams" = "total_streams",
-                                        "Most Songs on Charts" = "total_charts",
+                                       
                                         "Most Songs in Playlists" = "total_playlists"),
                             selected="total_streams"),
                 plotOutput("barplot2")
