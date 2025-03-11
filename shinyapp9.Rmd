@@ -34,7 +34,7 @@ artist_app_data <- spotify_data %>%
   mutate(streams=as.numeric(streams, na.rm=T)) %>%
   group_by(artist_s_name) %>% 
   summarize(total_streams=sum(streams, na.rm=T),
-            total_charts=sum(in_spotify_charts, na.rm=T),
+            total_charts=sum(n_distinct(track_name), na.rm=T),
             total_playlists=sum(in_spotify_playlists, na.rm=T))
 ```
 
@@ -45,7 +45,6 @@ song_app_data <-
   mutate(streams=as.numeric(streams, na.rm=T)) %>%
   group_by(track_name) %>% 
   summarize(total_streams=sum(streams, na.rm = T),
-            total_charts=sum(in_spotify_charts, na.rm = T),
             total_playlists=sum(in_spotify_playlists, na.rm = T))
 ```
 
@@ -249,7 +248,7 @@ ui <- dashboardPage(
               fluidPage(
                 selectInput("songs_y", "Select Ranking Metric:",
                             choices = c("Most Streams" = "total_streams",
-                                        "Most Songs on Charts" = "total_charts",
+                                       
                                         "Most Songs in Playlists" = "total_playlists"),
                             selected="total_streams"),
                 plotOutput("barplot2")
