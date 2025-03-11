@@ -1,0 +1,330 @@
+---
+title: "bis15L_project"
+author: "Itzel Gonzalez"
+date: "2025-03-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load the Libraries  
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(shiny)
+library(shinydashboard)
+require(janitor)
+library(ggplot2)
+library(bslib)
+```
+
+```{r}
+# load the data
+spotify_data <- read_csv("Spotify Most Streamed Songs.csv") %>% clean_names()
+#this is the only way I was able to work on it on my computer, ill delete it when Im done working.
+#spotify_data <- read_csv("C:/Users/samee/OneDrive/Documents/BIS15W2025_group2/Spotify Most Streamed Songs.csv") %>% clean_names()
+
+```
+
+
+```{r}
+# top streams, charts and playlists by artists
+artist_app_data <- spotify_data %>% 
+  mutate(streams=as.numeric(streams, na.rm=T)) %>%
+  group_by(artist_s_name) %>% 
+  summarize(total_streams=sum(streams, na.rm=T),
+            total_charts=sum(in_spotify_charts, na.rm=T),
+            total_playlists=sum(in_spotify_playlists, na.rm=T))
+```
+
+```{r}
+# top streams, charts and playlists by songs
+song_app_data <-
+  spotify_data %>% 
+  mutate(streams=as.numeric(streams, na.rm=T)) %>%
+  group_by(track_name) %>% 
+  summarize(total_streams=sum(streams, na.rm = T),
+            total_charts=sum(in_spotify_charts, na.rm = T),
+            total_playlists=sum(in_spotify_playlists, na.rm = T))
+```
+
+```{r}
+# using pivot longer to have a list of the attributes
+spotify_data_long <- spotify_data %>%
+  pivot_longer(cols = starts_with("danceability_percent"):starts_with("speechiness_percent"),
+               names_to = "attribute",
+               values_to = "percent") %>% 
+  select(released_year, attribute, percent)
+```
+
+```{r}
+# top 10 songs table
+spotify_data %>% 
+  top_n(10, danceability_percent) %>% 
+  ggplot(aes(x=track_name,y= danceability_percent))+
+  geom_col()+
+  coord_flip()
+```
+
+
+
+
+
+```{r}
+ui <- dashboardPage(
+  dashboardHeader(title = "Spotify Wrapped"),
+  
+  ## Sidebar content
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Home",
+               tabName = "dashboard",
+               icon = icon("home")),
+     
+      menuItem("Background",
+               icon = icon("list"),
+               menuSubItem("Introduction", tabName = "introduction"),
+               menuSubItem("Methods", tabName = "methods")),
+      
+      menuItem("Top Artists", 
+               tabName = "artist", 
+               icon = icon("user")),
+      
+      menuItem("Top Songs", 
+               tabName = "songs", 
+               icon = icon("music")),
+      
+      menuItem("Top 10 Songs Based on Mood",
+               tabName = "mood",
+               icon = icon("heart")),
+     
+      menuItem("Song Attributes", 
+               tabName = "attribute", 
+               icon = icon("chart-simple")),
+      
+      menuItem("Attributes Over Time",
+               tabName = "history",
+               icon = icon("calendar-days")),
+      
+      menuItem("Summary",
+               tabName = "summary",
+               icon = icon("clipboard-check"))
+    )
+  ),
+  
+  ## Body content
+  dashboardBody(
+    theme = bs_theme(
+      bootswatch = "darkly",
+      primary = "#1DB954"
+    ),
+    tags$style(HTML("
+      body, .content-wrapper, .main-sidebar, .main-header {
+        background-color: #000000 !important;
+        color: #FFFFFF !important;
+      }
+      .box {
+        background-color: #2f2f2f !important;
+        color: #FFFFFF !important;
+      }
+      .sidebar-menu > li > a {
+        color: #FFFFFF !important;
+      }
+      .navbar, .sidebar {
+        background-color: #000000 !important;
+      }
+      .main-header .navbar {
+        background-color: #1DB954 !important;
+      }
+      .main-header .logo {
+        background-color: #1DB954 !important;
+      }
+      .skin-green .sidebar-menu > li.active > a {
+        background-color: #1DB954 !important;
+      }
+    ")),
+    
+    tabItems(
+      ## Dashboard Tab
+      tabItem(tabName = "dashboard",
+              fluidRow(
+                tags$div(style = "display: flex; justify-content: center; align-items: center;",
+                         imageOutput("cover", height = "auto", width = "100%")
+                )
+              )
+      ),
+      
+      ## Introduction Tab
+      tabItem(tabName = "introduction",
+              tags$h1("Introduction"),
+              tags$h2("About This Project"),
+              tags$h3("In this project we aim to summarize and explain the trends seen in spotify top songs collected in 2023. Our inspiration for the project is the Spotify Wrpped summaries that come out each year, but instead of individual reports per person we use global spotify data for this project.")
+      ),
+      
+      ## Methods Tab
+      tabItem(tabName = "methods",
+              tags$h1("Methods"),
+              tags$h3("Data Collection"),
+              tags$p("“Spotify Most Streamed Songs Dataset” is a dataset from Kaggle, the owner is Muhammad Abdullah. The data was collected in 2023."),
+              
+              tags$h3("About the Data"),
+              tags$h4("Variables"),
+              tags$ul(
+                tags$li(" in_spotify_playlists: Number of Spotify playlists the song is featured in"),
+                tags$li("in_spotify_charts: Rank of the song on Spotify charts"),
+                tags$li("streams: Total number of streams on Spotify"),
+                tags$li("bpm: Beats per minute, representing the tempo of the song"),
+                tags$li("danceability_%: Suitability of the song for dancing"),
+                tags$li("valence_%: Positivity of the song’s musical content"),
+                tags$li("energy_%: Perceived energy level of the song"),
+                tags$li("acousticness_%: Acoustic sound presence in the song"),
+                tags$li("instrumentalness_%: Proportion of instrumental content in the track"),
+                tags$li("liveness_%: Presence of live performance elements"),
+                tags$li("speechiness_%: Amount of spoken words in the song"),
+              )),
+      
+      ## Song Attributes Tab
+      tabItem(tabName = "attribute",
+              tags$h2("Relationships between Song Attributes"),
+              fluidPage(
+                selectInput("attribute_x", 
+                            "Select X Variable",
+                            choices = c("danceability_percent", "valence_percent", "energy_percent", "acousticness_percent", 
+                                        "instrumentalness_percent", "liveness_percent", "speechiness_percent" ), 
+                            selected = "danceability_percent"),
+                selectInput("attribute_y", 
+                            "Select Y Variable",
+                            choices = c("danceability_percent", "valence_percent", "energy_percent", "acousticness_percent", 
+                                        "instrumentalness_percent", "liveness_percent", "speechiness_percent" ),
+                            selected = "danceability_percent"),
+                plotOutput("attribute_plot", width = "500px", height = "400px")
+              )
+      ),
+      
+      ## Attributes Over Time Tab
+      tabItem(tabName= "history",
+              h2("Song Attributes Over the Years"),
+              fluidPage(
+                selectInput("history_x",
+                            "Select Attribute:",
+                            choices = c("danceability_percent", "valence_percent", "energy_percent",
+                                        "acousticness_percent",
+                                        "instrumentalness_percent", "liveness_percent", "speechiness_percent"),
+                            selected = "danceability_percent"),
+                plotOutput("lineplot",  width = "500px", height = "400px")
+              )
+      ),
+      
+      ## Top Artists Tab
+      tabItem(tabName = "artist",
+              h2("Top 10 Spotify Artists by Category"),
+              fluidPage(
+                selectInput("artist_y", "Select Ranking Metric:",
+                            choices = c("Most Streams" = "total_streams",
+                                        "Most Songs on Charts" = "total_charts",
+                                        "Most Songs in Playlists" = "total_playlists"),
+                            selected="total_streams"),
+                plotOutput("barplot")
+              )
+      ),
+      
+      ## Top 10 Songs Based on Mood Tab
+      tabItem(tabName = "mood",
+              h2("Top 10 Songs Based on Mood"),
+              fluidPage(
+                selectInput("mood_x", 
+                            "Select Attribute", 
+                            choices = c("danceability_percent", "valence_percent", "energy_percent",
+                                        "acousticness_percent","instrumentalness_percent", 
+                                        "liveness_percent", "speechiness_percent"),
+                            selected = "valence_percent"),
+                tableOutput("table")
+              )
+      ),
+      
+      ## Top 10 Spotify Songs Tab
+      tabItem(tabName = "songs",
+              h2("Top 10 Spotify Songs by Category"),
+              fluidPage(
+                selectInput("songs_y", "Select Ranking Metric:",
+                            choices = c("Most Streams" = "total_streams",
+                                        "Most Songs on Charts" = "total_charts",
+                                        "Most Songs in Playlists" = "total_playlists"),
+                            selected="total_streams"),
+                plotOutput("barplot2")
+              )
+      )
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  session$onSessionEnded(stopApp)
+  
+  output$cover <- renderImage({
+    list(src = "cover.png", contentType = "image/png", alt = "Cover Image",
+         width = "100%", height = "auto")  # Let height adjust automatically
+  }, deleteFile = FALSE)
+  
+  output$attribute_plot <- renderPlot({
+    spotify_data %>% 
+      ggplot(aes_string(x = input$attribute_x, y = input$attribute_y)) +
+      geom_point(color = "#1ED760") +
+      theme_light(base_size = 14) +
+      labs(x = str_to_title(str_replace_all(input$attribute_x, "_", " ")), 
+           y = str_to_title(str_replace_all(input$attribute_y, "_", " "))) +
+      theme(plot.title = element_text(hjust = 0.5))
+  })
+  
+  output$lineplot <- renderPlot({
+    spotify_data_long %>% 
+      filter(attribute == input$history_x) %>% 
+      group_by(released_year, attribute) %>%
+      ggplot(aes(x = released_year, y = percent)) +
+      geom_line(color = "#1ED760") +
+      labs(x = str_to_title(str_replace_all(input$history_x, "_", " ")), y = "Percent") +
+      theme(plot.title = element_text(hjust = 0.5))
+  })
+  
+  output$barplot <- renderPlot({
+    top_artists <- artist_app_data %>%
+      arrange(desc(!!sym(input$artist_y))) %>%  # Sort by selected metric
+      head(10)
+    
+    ggplot(data = top_artists, 
+           aes_string(x = "`artist_s_name`", y = input$artist_y)) +
+      geom_col(fill = "#1DB954") +
+      labs(x = "Artist", y = "Metric") +
+      theme_classic() +
+      scale_y_continuous(labels = scales::comma)
+  })
+  
+  output$table <- renderTable({
+    spotify_data %>% 
+      arrange(desc(.data[[input$mood_x]])) %>% 
+      select("track_name", "artist_s_name", input$mood_x) %>% 
+      head(10)
+  })
+  
+  output$barplot2 <- renderPlot({
+    top_songs <- song_app_data %>%
+      arrange(desc(!!sym(input$songs_y))) %>%  # Sort by selected metric
+      head(10)
+    
+    ggplot(data = top_songs, 
+           aes_string(x = "`track_name`", y = input$songs_y)) +
+      geom_col(fill = "#1DB954") +
+      coord_flip() +
+      labs(x = "Song", y = "Metric") +
+      theme_classic() +
+      scale_y_continuous(labels = scales::comma)
+  })
+}
+
+shinyApp(ui, server)
+
+```
+
+
+
