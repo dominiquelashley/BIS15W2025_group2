@@ -22,8 +22,6 @@ library(bslib)
 ```{r}
 # load the data
 spotify_data <- read_csv("Spotify Most Streamed Songs.csv") %>% clean_names()
-#this is the only way I was able to work on it on my computer, ill delete it when Im done working.
-#spotify_data <- read_csv("C:/Users/samee/OneDrive/Documents/BIS15W2025_group2/Spotify Most Streamed Songs.csv") %>% clean_names()
 
 ```
 
@@ -64,6 +62,7 @@ spotify_data %>%
   ggplot(aes(x=track_name,y= danceability_percent))+
   geom_col()+
   coord_flip()
+  
 ```
 
 
@@ -104,8 +103,11 @@ ui <- dashboardPage(
       
       menuItem("Attributes Over Time",
                tabName = "history",
-               icon = icon("calendar-days"))
-    
+               icon = icon("calendar-days")),
+      
+      menuItem("Radar Chart",
+               tabName = "radar",
+               icon = icon("chart-pie"))
     )
   ),
   
@@ -250,6 +252,16 @@ ui <- dashboardPage(
                             selected="total_streams"),
                 plotOutput("barplot2")
               )
+      ),
+      tabItem(tabName = "radar",
+              h2("Song Attribute Radar Chart"),
+              fluidPage(
+                selectInput("radar_song", 
+                            "Select Song",
+                            choices = spotify_data$track_name,
+                            selected = spotify_data$track_name[1]),
+                plotOutput("radar_plot", width = "500px", height = "500px")
+              )
       )
     )
   )
@@ -270,7 +282,12 @@ server <- function(input, output, session) {
       theme_light(base_size = 14) +
       labs(x = str_to_title(str_replace_all(input$attribute_x, "_", " ")), 
            y = str_to_title(str_replace_all(input$attribute_y, "_", " "))) +
-      theme(plot.title = element_text(hjust = 0.5))
+      theme(plot.title = element_text(hjust = 0.5, size = 18 ),
+    axis.title.x = element_text(size = 18),                   # X-axis label size
+    axis.title.y = element_text(size = 18),                   # Y-axis label size
+    axis.text.x = element_text(size = 18),                    # X-axis text size
+    axis.text.y = element_text(size = 18)                     # Y-axis text size       
+    )
   })
   
   output$lineplot <- renderPlot({
@@ -280,7 +297,12 @@ server <- function(input, output, session) {
       ggplot(aes(x = released_year, y = percent)) +
       geom_line(color = "#1ED760") +
       labs(x = str_to_title(str_replace_all(input$history_x, "_", " ")), y = "Percent") +
-      theme(plot.title = element_text(hjust = 0.5))
+      theme(plot.title = element_text(hjust = 0.5, size = 18),
+    axis.title.x = element_text(size = 18),                   # X-axis label size
+    axis.title.y = element_text(size = 18),                   # Y-axis label size
+    axis.text.x = element_text(size = 18),                    # X-axis text size
+    axis.text.y = element_text(size = 18)                     # Y-axis text size       
+    )
   })
   
   output$barplot <- renderPlot({
@@ -293,7 +315,13 @@ server <- function(input, output, session) {
       geom_col(fill = "#1DB954") +
       labs(x = "Artist", y = "Metric") +
       theme_classic() +
-      scale_y_continuous(labels = scales::comma)
+      scale_y_continuous(labels = scales::comma)+
+      theme(
+      axis.title.x = element_text(size = 18),  # X-axis title size
+      axis.title.y = element_text(size = 18),  # Y-axis title size
+      axis.text.x = element_text(size = 11),   # X-axis text size
+      axis.text.y = element_text(size = 11)    # Y-axis text size
+    )
   })
   
   output$table <- renderTable({
@@ -314,8 +342,48 @@ server <- function(input, output, session) {
       coord_flip() +
       labs(x = "Song", y = "Metric") +
       theme_classic() +
-      scale_y_continuous(labels = scales::comma)
+      scale_y_continuous(labels = scales::comma)+
+    theme(
+      axis.title.x = element_text(size = 18),  # X-axis title size
+      axis.title.y = element_text(size = 18),  # Y-axis title size
+      axis.text.x = element_text(size = 11),   # X-axis text size
+      axis.text.y = element_text(size = 11)    # Y-axis text size
+    )
   })
+ output$radar_plot <- renderPlot({
+  # Define the order of attributes to match the chart's progression
+  attribute_order <- c("speechiness", "danceability", "energy", "valence", 
+                       "acousticness", "instrumentalness", "liveness")
+  
+  # Get the song data and select attributes
+  song_data <- spotify_data %>% 
+    filter(track_name == input$radar_song) %>% 
+    select(track_name, danceability_percent, energy_percent, valence_percent, 
+           acousticness_percent, instrumentalness_percent, liveness_percent, speechiness_percent) %>% 
+    slice(1)
+  
+  # Check if data is valid
+  if (nrow(song_data) == 0 || all(is.na(song_data[, -1]))) {
+    return(ggplot() + annotate("text", x = 1, y = 1, label = "No valid data for this song", size = 6) + theme_void())
+  }
+  
+  # Convert to long format with ordered attributes
+  radar_data <- song_data %>% 
+    pivot_longer(cols = -track_name, names_to = "attribute", values_to = "value") %>% 
+    mutate(attribute = str_remove(attribute, "_percent")) %>% 
+    mutate(attribute = factor(attribute, levels = attribute_order))
+  
+  # Create the radar chart without manual duplication (let coord_polar handle closure)
+  ggplot(radar_data, aes(x = attribute, y = value, group = 1)) +  # group = 1 ensures a single polygon
+    geom_polygon(fill = "#1DB954", alpha = 0.5, color = "#1ED760") +
+    geom_point(color = "#1ED760") +
+    coord_polar() +
+    scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 20)) +
+    labs(title = input$radar_song, y = "Percent") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate labels for readability
+})
 }
 
 shinyApp(ui, server)
